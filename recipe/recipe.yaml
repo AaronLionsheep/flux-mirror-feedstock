@@ -1,23 +1,47 @@
 context:
-  version: "0.1.0"
+  version: "0.2.0"
 
 package:
   name: flux-mirror
   version: ${{ version }}
 
 source:
-  url: https://github.com/fluxcd/flux-mirror/archive/refs/tags/v${{ version }}.tar.gz
-  sha256: 3f5cb0d09dd64bbd859107d166c7bfb0e165fcd1d5f5181295f4fa01f85026ee
-  target_directory: src
+  - url: https://github.com/fluxcd/flux-mirror/archive/refs/tags/v${{ version }}.tar.gz
+    sha256: b707061c81725d4bde27a07669d84d76202cdd7951fad62ff04147549196c637
+    target_directory: src
+  - url: https://raw.githubusercontent.com/in-toto/in-toto-golang/refs/heads/master/LICENSE
+    sha256: b5c26c8a2ad6dd7cac6646e470a32ee42d23c36124caac4e66c989b6545b2a44
+    file_name: LICENSE-in-toto-golang-1
+  - url: https://www.apache.org/licenses/LICENSE-2.0.txt
+    sha256: cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30
+    file_name: LICENSE-in-toto-golang-2
+  - url: https://raw.githubusercontent.com/cyberphone/json-canonicalization/refs/heads/master/LICENSE
+    sha256: 6821faaddedf2d78c95bb6d98b127e9e616097afd2f6bcc34389f000d13ab12d
+    file_name: LICENSE-json-canonicalization-1
+  - url: https://www.apache.org/licenses/LICENSE-2.0.txt
+    sha256: cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30
+    file_name: LICENSE-json-canonicalization-2
+  - url: https://raw.githubusercontent.com/in-toto/attestation/refs/heads/main/LICENSE
+    sha256: b3a6ac899861c2c28a1abd5c7ea8733fefaed6938d730e099c42671386032aeb
+    file_name: LICENSE-in-toto-attestation-1
+  - url: https://www.apache.org/licenses/LICENSE-2.0.txt
+    sha256: cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30
+    file_name: LICENSE-in-toto-attestation-2
 
 build:
   number: 0
   script:
     - cd src
-    - go-licenses save ./cmd/flux-mirror --save_path ../library_licenses
+    - go-licenses save ./cmd/flux-mirror --save_path ../library_licenses --ignore github.com/cyberphone/json-canonicalization --ignore github.com/in-toto/attestation --ignore github.com/in-toto/in-toto-golang
     - if: unix
       then: go build -v -o $PREFIX/bin/flux-mirror -ldflags="-s -w -X main.VERSION=${{ version }}" ./cmd/flux-mirror
       else: go build -v -o %LIBRARY_BIN%\flux-mirror.exe -ldflags="-s -w -X main.VERSION=${{ version }}" ./cmd/flux-mirror
+    - if: unix
+      then:
+        - mkdir -p $PREFIX/share/zsh/site-functions $PREFIX/share/bash-completion/completions $PREFIX/share/fish/vendor_completions.d
+        - $PREFIX/bin/flux-mirror completion zsh > $PREFIX/share/zsh/site-functions/_flux-mirror
+        - $PREFIX/bin/flux-mirror completion bash > $PREFIX/share/bash-completion/completions/flux-mirror
+        - $PREFIX/bin/flux-mirror completion fish > $PREFIX/share/fish/vendor_completions.d/flux-mirror.fish
 
 requirements:
   build:
@@ -29,6 +53,12 @@ tests:
   - package_contents:
       bin:
         - flux-mirror
+      files:
+        - if: unix
+          then:
+            - share/bash-completion/completions/flux-mirror
+            - share/fish/vendor_completions.d/flux-mirror.fish
+            - share/zsh/site-functions/_flux-mirror
       strict: true
 
 about:
@@ -44,6 +74,12 @@ about:
   license_file:
     - src/LICENSE
     - library_licenses/
+    - LICENSE-in-toto-golang-1
+    - LICENSE-in-toto-golang-2
+    - LICENSE-in-toto-attestation-1
+    - LICENSE-in-toto-attestation-2
+    - LICENSE-json-canonicalization-1
+    - LICENSE-json-canonicalization-2
   documentation: https://github.com/fluxcd/flux-mirror/tree/main/docs
   repository: https://github.com/fluxcd/flux-mirror
 
