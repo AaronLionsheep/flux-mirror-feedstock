@@ -36,6 +36,12 @@ build:
     - if: unix
       then: go build -v -o $PREFIX/bin/flux-mirror -ldflags="-s -w -X main.VERSION=${{ version }}" ./cmd/flux-mirror
       else: go build -v -o %LIBRARY_BIN%\flux-mirror.exe -ldflags="-s -w -X main.VERSION=${{ version }}" ./cmd/flux-mirror
+    - if: unix
+      then:
+        - mkdir -p $PREFIX/share/zsh/site-functions $PREFIX/share/bash-completion/completions $PREFIX/share/fish/vendor_completions.d
+        - $PREFIX/bin/flux-mirror completion zsh > $PREFIX/share/zsh/site-functions/_flux-mirror
+        - $PREFIX/bin/flux-mirror completion bash > $PREFIX/share/bash-completion/completions/flux-mirror
+        - $PREFIX/bin/flux-mirror completion fish > $PREFIX/share/fish/vendor_completions.d/flux-mirror.fish
 
 requirements:
   build:
@@ -47,6 +53,12 @@ tests:
   - package_contents:
       bin:
         - flux-mirror
+      files:
+        - if: unix
+          then:
+            - share/bash-completion/completions/flux-mirror
+            - share/fish/vendor_completions.d/flux-mirror.fish
+            - share/zsh/site-functions/_flux-mirror
       strict: true
 
 about:
